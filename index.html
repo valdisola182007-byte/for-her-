@@ -5,134 +5,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Для Дианочки</title>
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background: #000;
-            color: #ff69b4;
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
-
-        #message-container {
-            position: relative;
-            z-index: 2;
-            text-align: center;
-            padding: 20px;
-        }
-
-        #message {
-            font-size: 2.5rem;
-            font-weight: bold;
-            text-shadow: 0 0 15px #ff1493;
-            min-height: 1.2em;
-            transition: all 0.5s ease;
-        }
-
-        .big-heart {
-            font-size: 8rem;
-            color: #ff1493;
-            animation: pulse 1s infinite;
-            display: none;
-            text-shadow: 0 0 30px #ff69b4;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
+        body { margin: 0; overflow: hidden; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }
+        canvas { position: absolute; top: 0; left: 0; }
+        #message-container { z-index: 10; text-align: center; pointer-events: none; }
+        #message { color: #ff1493; font-size: 2.5rem; font-weight: bold; text-shadow: 0 0 20px #ff1493; }
+        #finalHeart { font-size: 10rem; display: none; animation: pulse 1s infinite; text-shadow: 0 0 30px #ff1493; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
-    <canvas id="heartCanvas"></canvas>
+    <canvas id="c"></canvas>
     <div id="message-container">
         <div id="message"></div>
-        <div id="finalHeart" class="big-heart">❤️</div>
+        <div id="finalHeart">❤️</div>
     </div>
 
     <script>
-        const canvas = document.getElementById('heartCanvas');
+        const canvas = document.getElementById('c');
         const ctx = canvas.getContext('2d');
-
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
         const hearts = [];
-        const heartChar = "❤️";
-
-        class Heart {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height - canvas.height;
-                this.size = Math.random() * 15 + 10;
-                this.speed = Math.random() * 2 + 1;
-                this.opacity = Math.random() * 0.5 + 0.3;
-            }
-
-            draw() {
-                ctx.globalAlpha = this.opacity;
-                ctx.font = ${this.size}px Arial;
-                ctx.fillText(heartChar, this.x, this.y);
-            }
-
-            update() {
-                this.y += this.speed;
-                if (this.y > canvas.height) {
-                    this.y = -20;
-                    this.x = Math.random() * canvas.width;
-                }
-            }
+        function createHeart() {
+            return {
+                x: Math.random() * canvas.width,
+                y: -20,
+                s: Math.random() * 2 + 1,
+                size: Math.random() * 10 + 5
+            };
         }
 
-        for (let i = 0; i < 50; i++) {
-            hearts.push(new Heart());
+        function drawH(x, y, size) {
+            ctx.fillStyle = '#ff69b4';
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.bezierCurveTo(x, y - 3, x - 5, y - 15, x - size, y - 15);
+            ctx.bezierCurveTo(x - size * 2, y - 15, x - size * 2, y + size, x - size * 2, y + size);
+            ctx.bezierCurveTo(x - size * 2, y + size * 2, x - size, y + size * 3.5, x, y + size * 4.5);
+            ctx.bezierCurveTo(x + size, y + size * 3.5, x + size * 2, y + size * 2, x + size * 2, y + size);
+            ctx.bezierCurveTo(x + size * 2, y + size, x + size * 2, y - 15, x + size, y - 15);
+            ctx.bezierCurveTo(x + 5, y - 15, x, y - 3, x, y);
+            ctx.fill();
         }
 
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#ff69b4";
-            hearts.forEach(h => {
-                h.draw();
-                h.update();
+        function anim() {
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(0,0,canvas.width,canvas.height);
+            if(Math.random() < 0.1) hearts.push(createHeart());
+            hearts.forEach((h, i) => {
+                h.y += h.s;
+                drawH(h.x, h.y, h.size);
+                if(h.y > canvas.height) hearts.splice(i, 1);
             });
-            requestAnimationFrame(animate);
+            requestAnimationFrame(anim);
         }
-        animate();
+        anim();
 
-        const messages = ["3", "2", "1", "Я", "ТЕБЯ", "ЛЮБЛЮ", "ДИАНОЧКА", "ТЫ У МЕНЯ", "САМАЯ ЛУЧШАЯ", "И ЕДИНСТВЕННАЯ"];
-        let index = 0;
-        const msgElement = document.getElementById('message');
-        const finalHeart = document.getElementById('finalHeart');
-
-        function showNextMessage() {
-            if (index < messages.length) {
-                msgElement.innerText = messages[index];
-                index++;
-                setTimeout(showNextMessage, 1500); // Скорость смены слов (1.5 сек)
+        const msgs = ["3", "2", "1", "Я", "ТЕБЯ", "ЛЮБЛЮ", "ДИАНОЧКА", "ТЫ У МЕНЯ", "САМАЯ ЛУЧШАЯ", "И ЕДИНСТВЕННАЯ"];
+        let idx = 0;
+        function show() {
+            if(idx < msgs.length) {
+                document.getElementById('message').innerText = msgs[idx];
+                idx++;
+                setTimeout(show, 1500);
             } else {
-                msgElement.style.display = 'none';
-                finalHeart.style.display = 'block';
+                document.getElementById('message').style.display = 'none';
+                document.getElementById('finalHeart').style.display = 'block';
             }
         }
-
-        // Запуск через небольшую паузу
-        setTimeout(showNextMessage, 1000);
-
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
+        setTimeout(show, 500);
     </script>
 </body>
 </html>
