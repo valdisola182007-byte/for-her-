@@ -1,39 +1,72 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { background-color: black; color: #ff1493; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; }
-        #text { font-size: 40px; font-weight: bold; text-shadow: 0 0 20px #ff1493; }
-        #heart { font-size: 100px; display: none; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-    </style>
-</head>
-<body>
+function animateCanvas() {
+            ctx.clearRect(0, 0, width, height);
+            
+            particles.forEach(p => {
+                // Движение
+                p.x += p.speedX;
+                p.y += p.speedY;
 
-    <div id="text"></div>
-    <div id="heart">❤️</div>
+                // Отскок от границ
+                if (p.x < 0 || p.x > width) p.speedX *= -1;
+                if (p.y < 0 || p.y > height) p.speedY *= -1;
 
-    <script>
+                // Пульсация прозрачности
+                p.opacity += (Math.random() - 0.5) * 0.05;
+                if (p.opacity < 0.1) p.opacity = 0.1;
+                if (p.opacity > 0.8) p.opacity = 0.8;
+
+                // Отрисовка
+                if (p.isHeart) {
+                    drawHeart(ctx, p.x, p.y, p.size * 4, p.color, p.opacity);
+                } else {
+                    ctx.globalAlpha = p.opacity;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.random() * Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+
+            requestAnimationFrame(animateCanvas);
+        }
+
+        // --- Настройка Текста ---
         const words = ["3", "2", "1", "Я", "ТЕБЯ", "ЛЮБЛЮ", "ДИАНОЧКА", "ТЫ У МЕНЯ", "САМАЯ ЛУЧШАЯ", "И ЕДИНСТВЕННАЯ"];
-        let i = 0;
-        const display = document.getElementById("text");
-        const heart = document.getElementById("heart");
+        let currentWordIndex = 0;
+        const textElement = document.getElementById('text');
+        const finalHeartElement = document.getElementById('final-heart');
 
-        function show() {
-            if (i < words.length) {
-                display.innerText = words[i];
-                i++;
-                setTimeout(show, 1200);
+        function showNextWord() {
+            if (currentWordIndex < words.length) {
+                // Сначала скрываем старое слово
+                textElement.classList.remove('show');
+                textElement.classList.add('hide');
+
+                setTimeout(() => {
+                    // Меняем текст и плавно показываем
+                    textElement.innerText = words[currentWordIndex];
+                    textElement.classList.remove('hide');
+                    textElement.classList.add('show');
+                    currentWordIndex++;
+                    // Время показа слова (1.8 сек), потом запускаем следующее
+                    setTimeout(showNextWord, 1800); 
+                }, 800); // Время на затухание старого слова
+
             } else {
-                display.style.display = "none";
-                heart.style.display = "block";
+                // Финал: скрываем текст, показываем сердце
+                textElement.style.display = 'none';
+                finalHeartElement.style.display = 'block';
             }
         }
+
+        // --- Запуск всего ---
+        initCanvas();
+        animateCanvas();
+        window.addEventListener('resize', initCanvas);
         
-        // Запуск через 1 секунду после загрузки
-        setTimeout(show, 1000);
+        // Пауза перед стартом текста
+        setTimeout(showNextWord, 1500);
+
     </script>
 </body>
 </html>
